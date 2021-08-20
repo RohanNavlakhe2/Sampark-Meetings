@@ -9,6 +9,7 @@ const $videoContainer = document.querySelector('#video-grid')
 let myStreamToPassToRemote
 let localStream
 let newpeerId
+let connectedPeers = []
 
 
 navigator.mediaDevices
@@ -35,7 +36,7 @@ navigator.mediaDevices
 
         //Provide your own stream if you're a new joiner (when someone calls for your stream)
         peer.on('call', function(call) {
-            console.log('Got call for stream')
+            console.log('Got call from peer ',call.peer)
             //stopVideo()
             call.answer(stream); // Answer the call with an A/V stream.
            /* const newVideoElement = document.createElement('video')
@@ -47,6 +48,13 @@ navigator.mediaDevices
                 // Show stream in some video/canvas element.
                 initVideoStream(remoteStream,videoElement)
             });
+
+            call.on('close',() => {
+                videoElement.remove()
+            })
+
+            connectedPeers[call.peer] = call
+
         });
 
         //Get stream from new joiner
@@ -70,11 +78,20 @@ navigator.mediaDevices
                     console.log('Call To Participant : '+participant.peerId)
                     var call = peer.call(participant.peerId,stream);
                     const videoElement = prepareVideoElement()
+
                     call.on('stream', function(remoteStream) {
                         console.log('Got Stream in answer')
                         // Show stream in some video/canvas element.
                         initVideoStream(remoteStream,videoElement)
                     });
+
+                    call.on('close',() => {
+                        console.log('on close called,removing video')
+                       videoElement.remove()
+                    })
+
+                   connectedPeers[participant.peerId] = call
+
                 })
             }
         })
@@ -82,6 +99,14 @@ navigator.mediaDevices
 
 peer.on('open',(peerId) => {
     socket.emit('new-user',peerId,room)
+})
+
+socket.on('user-disconnected',(peerId) => {
+   alert(`user ${peerId} left the meeting`)
+   if(connectedPeers[[peerId]]){
+       console.log('calling on close of peer : '+peerId)
+       connectedPeers[peerId].close()
+   }
 })
 
 

@@ -47,7 +47,13 @@ io.on('connection',(socket) => {
         socket.join(roomId)
         socket.emit('welcome',`Welcome to the Room`,participants)
         //socket.broadcast.to(roomId).emit('message',newUserId)
+
+        socket.on('disconnect',() => {
+            socket.broadcast.to(roomId).emit('user-disconnected',newUserId)
+        })
     })
+
+
 })
 
 server.listen(process.env.PORT,()=>{
