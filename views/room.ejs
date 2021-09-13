@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="/bootstrap/css/bootstrap.css">
     <link rel="stylesheet" href="/bootstrap/css/mdb.css">
     <link rel="stylesheet" href="/bootstrap/css/animate.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link rel="stylesheet" href="/styles.css">
     <title>Sampark</title>
 </head>
@@ -17,7 +18,20 @@
     <div class="main__left">
         <div class="main__videos">
             <div id="video-grid">
+                <!--<div class="bg-light">
+                    <div>
+                        <img src="/img/user_thumbnail.png" alt="" width="300"
+                             height="200">  &lt;!&ndash;style="display: none"&ndash;&gt;
+                        <video width="300" height="200"
+                                src="https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4"
+                               style="display: none"
+                        />
+                    </div>
 
+                    <span>
+                    <h5 class="text-danger">Rohan</h5>
+                    </span>
+                </div>-->
             </div>
         </div>
         <div class="main__controls">
@@ -26,12 +40,9 @@
                     <i class="fas fa-microphone"></i>
                     <span>Mute</span>
                 </div>
-                <div onclick="playStop()" class="main__controls__button main__video_button" >
+                <div onclick="playStop()" class="main__controls__button main__video_button">
                     <i class="fas fa-video"></i>
                     <span>Stop Video</span>
-                </div>
-                <div onclick="allowNewUser()" class="main__controls__button main__video_button" >
-                    <span>Allow</span>
                 </div>
             </div>
             <!--<div class="main__controls__block">
@@ -55,30 +66,62 @@
             </div>-->
         </div>
     </div>
-   <!-- <div class="main__right">
-        <div class="main__header">
-            <h6>Chat</h6>
-        </div>
-        <div class="main__chat_window">
-            <ul class="messages">
+    <!-- <div class="main__right">
+         <div class="main__header">
+             <h6>Chat</h6>
+         </div>
+         <div class="main__chat_window">
+             <ul class="messages">
 
-            </ul>
+             </ul>
 
-        </div>
-        <div class="main__message_container">
-            <input id="chat_message" type="text" placeholder="Type message here...">
-        </div>
-    </div>-->
+         </div>
+         <div class="main__message_container">
+             <input id="chat_message" type="text" placeholder="Type message here...">
+         </div>
+     </div>-->
 </div>
-<!--<div id="video-grid"></div>-->
 
 
+<!-- Modal -->
+<div class="modal fade" id="usernameModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true"
+     data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <!-- <div class="modal-header">
+                 <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+             </div>-->
+            <div class="modal-body">
+                <div class="form-group">
+                    <input type="text" class="form-control" id="usernameField" aria-describedby="usernameHelp"
+                           placeholder="Name">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <!--<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>-->
+                <button type="button" id="continueWithUsernameBtn" class="btn btn-primary"
+                        onclick="continueWithUsername()">Continue
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 
+<!--Toast-->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header" id="toastContent">
+        </div>
+
+    </div>
+</div>
 
 
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
 <script src="https://kit.fontawesome.com/c939d0e917.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>

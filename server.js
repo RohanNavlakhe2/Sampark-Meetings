@@ -32,24 +32,29 @@ app.get('',(req,res) => {
 })
 
 app.get('/joinroom/:roomId',(req,res) => {
-    console.log(`/joinroom = ${req.params.roomId}`)
+    //console.log(`/joinroom = ${req.params.roomId}`)
     res.render('room',{roomId:req.params.roomId})
+
 })
+
+/*app.get('/meeting/:username/:roomId',(req,res) => {
+    res.render('room',{username:req.params.username,roomId:req.params.roomId})
+})*/
 
 io.on('connection',(socket) => {
     console.log('New Connection')
 
-    socket.on('new-user',async (newUserId,roomId) => {
-        console.log("New user at Room : "+roomId)
+    socket.on('new-user',async (newUserId,roomId,newUserName) => {
+        console.log(`New User ${newUserName} at room ${roomId}`)
         const participants = await Participant.find({roomId})
-        const newParticipant = Participant({name:`User${newUserId}`,peerId:newUserId,roomId})
+        const newParticipant = Participant({name:`${newUserName}`,peerId:newUserId,roomId})
         await newParticipant.save()
         socket.join(roomId)
-        socket.emit('welcome',`Welcome to the Room`,participants)
-        //socket.broadcast.to(roomId).emit('message',newUserId)
+        socket.emit('welcome',`Welcome to the Room ${newUserName}`,participants)
+        socket.broadcast.to(roomId).emit('message',`${newUserName} joined`)
 
         socket.on('disconnect',() => {
-            socket.broadcast.to(roomId).emit('user-disconnected',newUserId)
+            socket.broadcast.to(roomId).emit('user-disconnected',newUserId,newUserName)
         })
     })
 
