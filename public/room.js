@@ -19,7 +19,7 @@ const toast = new bootstrap.Toast(document.getElementById('liveToast'))
 const toastContent = document.getElementById('toastContent')
 let myStreamToPassToRemote
 let localStream
-let connectedPeers = []
+//let connectedPeers = []
 let username
 
 
@@ -123,11 +123,11 @@ const getAudioVideo = () => {
 
                 });
 
-                call.on('close', () => {
+                /*call.on('close', () => {
                     videoElement.remove()
                 })
 
-                connectedPeers[call.peer] = call
+                connectedPeers[call.peer] = call*/
 
             });
 
@@ -214,14 +214,14 @@ const giveAudioVideoStatusToCallingPeer = (callingPeerId) => {
 //Creates a section with Thumbnail image and user video
 const initVideoStream = (stream, video, peerId,username) => {
     console.log('init video stream')
-    video.srcObject = stream
+    //video.srcObject = stream
     video.id = `user-video-${peerId}`
     //video.display = 'none'
-    /*if ('srcObject' in video) {
+    if ('srcObject' in video) {
       video.srcObject = stream
     } else {
       video.src = window.URL.createObjectURL(stream) // for older browsers
-    }*/
+    }
     video.addEventListener('loadedmetadata', () => {
         video.play()
     })
