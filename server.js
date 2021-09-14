@@ -53,10 +53,20 @@ io.on('connection',(socket) => {
         socket.emit('welcome',`Welcome to the Room ${newUserName}`,participants)
         socket.broadcast.to(roomId).emit('message',`${newUserName} joined`)
 
+        socket.on('providingVideoStatus',(data) => {
+            socket.broadcast.to(roomId).emit('notifyingVideoStatusToAll',data)
+        })
+
+        socket.on('providingMicStatus',(data) => {
+            socket.broadcast.to(roomId).emit('notifyingMicStatusToAll',data)
+        })
+
         socket.on('disconnect',() => {
             socket.broadcast.to(roomId).emit('user-disconnected',newUserId,newUserName)
         })
     })
+
+
 
 
 })

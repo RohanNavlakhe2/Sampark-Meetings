@@ -1,7 +1,10 @@
 
-// in 'welcome' socket pass a object containing peerId and peerName of all the existing peers to the
-// newly join peer.
-//in 'message' socket pass newly joined peerId and peerName to all existing peers
+// 1. when a user toggle his video,make change in all other peers screen.
+// 2.  while calling the peers,caller peer should pass his name and videoStatus.Name will be shown
+// on other side peer's screen (currently we're showing newuser) and based on the videoStatus
+// will decide whether to show thumbnail or video.
+
+
 
 let socket,peer
 
@@ -48,17 +51,29 @@ const continueWithUsername = () => {
 
     peer.on('connection', function(conn) {
         conn.on('data', function(data){
-            showInitialVideoOrThumbnailOfNewUser(data.peerId,data.videoStatus)
-            console.log(`Video of User ${data.username} is ${data.videoStatus}`);
+            toggleVideoAndThumbnailBasedOnVideoStatus(data.peerId,data.videoStatus)
+            toggleMicIcon(data.peerId,data.micStatus)
+            //console.log(`Video of User ${data.username} is ${data.videoStatus}`);
         });
     });
 
+
+    socket.on('notifyingVideoStatusToAll',(data) => {
+        toggleVideoAndThumbnailBasedOnVideoStatus(data.peerId,data.videoStatus)
+        //console.log(`Video Status of peer ${data.peerId} ${data.videoStatus}`)
+    })
+
+    socket.on('notifyingMicStatusToAll',(data) => {
+       toggleMicIcon(data.peerId,data.micStatus)
+    })
+
     socket.on('user-disconnected', (peerId, leftUsername) => {
         showToast(`${leftUsername} left the meeting`)
-        if (connectedPeers[[peerId]]) {
+        removeUserView(peerId)
+        /*if (connectedPeers[[peerId]]) {
             console.log('calling on close of peer : ' + peerId)
             connectedPeers[peerId].close()
-        }
+        }*/
     })
 
 }
@@ -88,10 +103,10 @@ const getAudioVideo = () => {
 
             //Provide your own stream if you're a new joiner (when someone calls for your stream)
             peer.on('call', function (call) {
-                console.log('Got call from peer ', call.peer)
+                console.log('Got call from peer ', call.metadata.username)
                 //stopVideo()
                 call.answer(stream); // Answer the call with an A/V stream.
-                giveVideoStatusToCallingPeer(call.peer)
+                giveAudioVideoStatusToCallingPeer(call.peer)
                 const videoElement = prepareVideoElement()
                 let tempPeerId;
 
@@ -100,7 +115,9 @@ const getAudioVideo = () => {
                     //const newVideoElement = document.createElement('video')
                     // Show stream in some video/canvas element.
                     if(tempPeerId === undefined){
-                        initVideoStream(remoteStream, videoElement,call.peer,'new user')
+                        initVideoStream(remoteStream, videoElement,call.peer,call.metadata.username)
+                        toggleVideoAndThumbnailBasedOnVideoStatus(call.peer,call.metadata.videoStatus)
+                        toggleMicIcon(call.peer,call.metadata.micStatus)
                         tempPeerId = call.peer
                     }
 
@@ -133,7 +150,11 @@ const getAudioVideo = () => {
                 if (participants.length > 0) {
                     participants.forEach((participant) => {
                         console.log('Call To Participant : ' + participant.peerId)
-                        var call = peer.call(participant.peerId, stream);
+                        var call = peer.call(participant.peerId, stream,{metadata:{
+                            username,videoStatus:myStreamToPassToRemote.getVideoTracks()[0].enabled,
+                                micStatus:myStreamToPassToRemote.getAudioTracks()[0].enabled
+                        }
+                        });
                         const videoElement = prepareVideoElement()
                         let tempPeerId
 
@@ -148,12 +169,12 @@ const getAudioVideo = () => {
 
                         });
 
-                        call.on('close', () => {
+                       /* call.on('close', () => {
                             console.log('on close called,removing video')
                             videoElement.remove()
                         })
 
-                        connectedPeers[participant.peerId] = call
+                        connectedPeers[participant.peerId] = call*/
 
                     })
                 }
@@ -165,12 +186,13 @@ const getAudioVideo = () => {
         })
 }
 
-const giveVideoStatusToCallingPeer = (callingPeerId) => {
+const giveAudioVideoStatusToCallingPeer = (callingPeerId) => {
     var conn = peer.connect(callingPeerId)
     // on open will be launch when you successfully connect to PeerServer
     conn.on('open', function(){
         // here you have conn.id
-        conn.send({username,peerId:peer.id,videoStatus:myStreamToPassToRemote.getVideoTracks()[0].enabled});
+        conn.send({username,peerId:peer.id,videoStatus:myStreamToPassToRemote.getVideoTracks()[0].enabled,
+            micStatus:myStreamToPassToRemote.getAudioTracks()[0].enabled});
     });
 }
 
@@ -209,14 +231,15 @@ const initVideoStream = (stream, video, peerId,username) => {
 }
 
 const createUserView = (peerId,video,username) => {
-    const userDiv = `<div class="bg-light" id="user-div-${peerId}">
+    const userDiv = `<div class="bg-light m-2" id="user-div-${peerId}">
                     <div id="video-div-${peerId}">
                         <img id="user-thumbnail-${peerId}" src="/img/user_thumbnail.png" alt="" width="300"
                              height="200">
                   </div>
 
                     <span>
-                    <h5 class="text-danger">${username}</h5>
+                    <h5 class="text-danger d-inline-block">${username}</h5>
+                     <i class="fas fa-microphone-slash" id="peer-microphone-${peerId}"></i>
                     </span>
                 </div>`
 
@@ -228,7 +251,14 @@ const createUserView = (peerId,video,username) => {
     $videoContainer.append(userDivHtml)
     const videoDiv = document.getElementById( `video-div-${peerId}`)
     video.style.display = 'none'
+    video.width = 300
+    video.height = 200
     videoDiv.append(video)
+}
+
+const removeUserView = (peerId) => {
+    const userToRemove = document.getElementById(peerId)
+    userToRemove.parentNode.removeChild(userToRemove)
 }
 
 const muteUnmute = () => {
@@ -240,6 +270,9 @@ const muteUnmute = () => {
         setMuteButton();
         myStreamToPassToRemote.getAudioTracks()[0].enabled = true;
     }
+
+    socket.emit('providingMicStatus',{peerId:peer.id,micStatus:myStreamToPassToRemote.getAudioTracks()[0].enabled})
+
 }
 
 const mute = () => {
@@ -251,7 +284,6 @@ const mute = () => {
 }
 
 const playStop = () => {
-    //console.log('object')
     let enabled = myStreamToPassToRemote.getVideoTracks()[0].enabled;
     if (enabled) {
         myStreamToPassToRemote.getVideoTracks()[0].enabled = false;
@@ -263,6 +295,7 @@ const playStop = () => {
         localStream.getVideoTracks()[0].enabled = true;
     }
     toggleVideoAndThumbnail(peer.id)
+    socket.emit('providingVideoStatus',{peerId:peer.id,videoStatus:myStreamToPassToRemote.getVideoTracks()[0].enabled})
 }
 
 const stopVideo = () => {
@@ -279,6 +312,13 @@ const setMuteButton = () => {
     <span>Mute</span>
   `
     document.querySelector('.main__mute_button').innerHTML = html;
+
+    toggleMicIcon(peer.id,true)
+
+   /* const myMic = document.getElementById(`peer-microphone-${peer.id}`)
+    myMic.classList.remove('fa-microphone-slash')
+    myMic.classList.add('fa-microphone')*/
+
 }
 
 const setUnmuteButton = () => {
@@ -287,6 +327,24 @@ const setUnmuteButton = () => {
     <span>Unmute</span>
   `
     document.querySelector('.main__mute_button').innerHTML = html;
+
+    toggleMicIcon(peer.id,false)
+
+  /*  const myMic = document.getElementById(`peer-microphone-${peer.id}`)
+    myMic.classList.remove('fa-microphone')
+    myMic.classList.add('fa-microphone-slash')*/
+}
+
+const toggleMicIcon = (peerId,micStatus) => {
+    const mic = document.getElementById(`peer-microphone-${peerId}`)
+
+    if(micStatus){
+        mic.classList.remove('fa-microphone-slash')
+        mic.classList.add('fa-microphone')
+    }else{
+        mic.classList.remove('fa-microphone')
+        mic.classList.add('fa-microphone-slash')
+    }
 }
 
 const setStopVideo = () => {
@@ -325,7 +383,7 @@ const toggleVideoAndThumbnail = (peerId) => {
     }
 }
 
-const showInitialVideoOrThumbnailOfNewUser = (peerId,videoStatus) => {
+const toggleVideoAndThumbnailBasedOnVideoStatus = (peerId,videoStatus) => {
     const userVideo = document.getElementById(`user-video-${peerId}`)
     const userThumbnail = document.getElementById(`user-thumbnail-${peerId}`)
 
